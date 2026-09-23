@@ -92,7 +92,7 @@ function validateCreateAccountRequest(payload = {}) {
 function evaluateAccountPayoutReadiness(account) {
   const currentlyDue = account?.requirements?.currently_due || [];
   const transfersCapability = account?.capabilities?.transfers;
-  const isTransferCapabilityReady = !transfersCapability || transfersCapability === 'active';
+  const isTransferCapabilityReady = transfersCapability === 'active';
   const isReady = Boolean(
     account?.details_submitted &&
       account?.payouts_enabled &&

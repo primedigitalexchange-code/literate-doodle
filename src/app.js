@@ -12,6 +12,13 @@ const {
 
 function createApp({ config = createAppConfig(), stripeService = createStripeService(config) } = {}) {
   const app = express();
+  const escapeHtml = (value) =>
+    String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
 
   app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res) => {
     if (!config.stripeWebhookSecret) {
@@ -153,12 +160,13 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
   });
 
   app.get('/onboarding/return', (req, res) => {
+    const safeAccountId = escapeHtml(req.query.account || '');
     res.type('html').send(`<!doctype html>
 <html lang="en">
   <head><meta charset="utf-8" /><title>Stripe onboarding return</title></head>
   <body>
     <h1>Stripe onboarding returned control to your app</h1>
-    <p>Connected account: ${String(req.query.account || '')}</p>
+    <p>Connected account: ${safeAccountId}</p>
     <p>Persist the account status in your application before allowing live payouts.</p>
     <p><a href="/">Back to operator console</a></p>
   </body>

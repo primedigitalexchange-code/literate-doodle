@@ -91,6 +91,27 @@ test('POST /api/payouts creates a transfer when the Stripe account is ready', as
   assert.equal(response.body.transferId, 'tr_123');
 });
 
+test('POST /api/payouts blocks transfers when the transfers capability is missing', async () => {
+  const stripeService = {
+    getConnectedAccount: async () => ({
+      id: 'acct_123',
+      details_submitted: true,
+      payouts_enabled: true,
+      charges_enabled: true,
+      capabilities: {},
+      requirements: { currently_due: [] },
+    }),
+  };
+  const app = createApp({ config: createConfig(), stripeService });
+
+  const response = await request(app)
+    .post('/api/payouts')
+    .send({ connectedAccountId: 'acct_123', amount: 2500, currency: 'usd' });
+
+  assert.equal(response.status, 409);
+  assert.match(response.body.details.join(' '), /transfers capability/i);
+});
+
 test('POST /api/webhooks/stripe verifies the event through the injected Stripe service', async () => {
   let constructArgs;
   const stripeService = {
@@ -111,4 +132,14 @@ test('POST /api/webhooks/stripe verifies the event through the injected Stripe s
   assert.equal(response.body.type, 'account.updated');
   assert.equal(constructArgs.signature, 't=1,v1=abc');
   assert.equal(constructArgs.secret, 'whsec_123');
+});
+
+test('GET /onboarding/return escapes the account query parameter before rendering', async () => {
+  const app = createApp({ config: createConfig(), stripeService: {} });
+
+  const response = await request(app).get('/onboarding/return?account=%3Cscript%3Ealert(1)%3C%2Fscript%3E');
+
+  assert.equal(response.status, 200);
+  assert.match(response.text, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(response.text, /<script>alert\(1\)<\/script>/);
 });
