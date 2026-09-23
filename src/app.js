@@ -177,7 +177,7 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
 
     res.type('html').send(`<!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8" /><title>Stripe onboarding return</title></head>
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Stripe onboarding return</title></head>
   <body>
     <h1>Stripe onboarding returned control to your app</h1>
     <p>Review the connected account status in Stripe and persist it in your application before allowing live payouts.</p>

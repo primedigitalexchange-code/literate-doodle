@@ -56,3 +56,16 @@ test('evaluateAccountPayoutReadiness returns blockers when account is incomplete
   assert.match(result.blockers.join(' '), /onboarding is not complete/i);
   assert.match(result.blockers.join(' '), /transfers capability/i);
 });
+
+test('evaluateAccountPayoutReadiness allows transfer-only accounts without charges enabled', () => {
+  const result = evaluateAccountPayoutReadiness({
+    details_submitted: true,
+    payouts_enabled: true,
+    charges_enabled: false,
+    capabilities: { transfers: 'active' },
+    requirements: { currently_due: [] },
+  });
+
+  assert.equal(result.isReady, true);
+  assert.deepEqual(result.blockers, []);
+});

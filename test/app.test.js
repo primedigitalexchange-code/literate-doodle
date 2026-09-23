@@ -71,7 +71,7 @@ test('POST /api/payouts creates a transfer when the Stripe account is ready', as
       id: 'acct_123',
       details_submitted: true,
       payouts_enabled: true,
-      charges_enabled: true,
+      charges_enabled: false,
       capabilities: { transfers: 'active' },
       requirements: { currently_due: [] },
     }),

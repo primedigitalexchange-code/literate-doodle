@@ -100,7 +100,6 @@ function evaluateAccountPayoutReadiness(account) {
   const isReady = Boolean(
     account?.details_submitted &&
       account?.payouts_enabled &&
-      account?.charges_enabled &&
       isTransferCapabilityReady
   );
 
@@ -109,7 +108,6 @@ function evaluateAccountPayoutReadiness(account) {
     blockers: [
       !account?.details_submitted ? 'Stripe onboarding is not complete.' : null,
       !account?.payouts_enabled ? 'Payouts are not enabled on the connected account.' : null,
-      !account?.charges_enabled ? 'Charges are not enabled on the connected account.' : null,
       !isTransferCapabilityReady ? 'The transfers capability is not active.' : null,
     ].filter(Boolean),
     currentlyDue,

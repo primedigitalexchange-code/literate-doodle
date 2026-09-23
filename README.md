@@ -97,7 +97,7 @@ The endpoint:
 - validates the Stripe account ID, amount, and currency,
 - rejects raw bank fields if they are supplied,
 - retrieves the connected account from Stripe,
-- checks `details_submitted`, `charges_enabled`, `payouts_enabled`, and the `transfers` capability,
+- checks `details_submitted`, `payouts_enabled`, and the `transfers` capability,
 - creates a Stripe **transfer** to the connected account only when the account is ready.
 
 > This foundation creates a transfer to the connected Stripe account. Final payout timing to the seller's Bank of America account remains controlled by Stripe and the connected account's payout settings.
