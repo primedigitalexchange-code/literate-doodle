@@ -27,7 +27,7 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
 
   app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res) => {
     if (!config.stripeWebhookSecret) {
-      return res.status(503).json({
+      return res.status(400).json({
         error: 'Stripe webhook secret is not configured.',
       });
     }
@@ -68,14 +68,6 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
     }
 
     return res.json({ status: 'ok' });
-  });
-
-  app.get('/api/config', (_req, res) => {
-    res.json({
-      supportedPayoutCurrencies: config.supportedPayoutCurrencies,
-      bankSupportMessage:
-        'Bank of America is supported through Stripe-hosted onboarding and external account verification. This application does not collect or verify bank credentials directly.',
-    });
   });
 
   app.post('/api/connect/accounts', async (req, res, next) => {
@@ -187,7 +179,10 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
   });
 
   app.use((error, _req, res, _next) => {
-    const statusCode = error && Number.isInteger(error.statusCode) ? error.statusCode : 500;
+    const statusCode =
+      (error && Number.isInteger(error.statusCode) && error.statusCode) ||
+      (error && Number.isInteger(error.status) && error.status) ||
+      500;
     const safeMessage = statusCode >= 500 ? 'Unable to complete the Stripe request.' : error.message;
 
     res.status(statusCode).json({

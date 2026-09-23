@@ -144,6 +144,25 @@ test('POST /api/webhooks/stripe verifies the event through the injected Stripe s
   assert.equal(constructArgs.secret, 'whsec_123');
 });
 
+test('POST /api/webhooks/stripe returns a 400 when signature verification fails', async () => {
+  const stripeService = {
+    constructWebhookEvent: () => {
+      throw new Error('No signatures found matching the expected signature for payload.');
+    },
+  };
+  const app = createApp({ config: createConfig(), stripeService });
+
+  const response = await request(app)
+    .post('/api/webhooks/stripe')
+    .set('stripe-signature', 't=1,v1=abc')
+    .set('content-type', 'application/json')
+    .send(JSON.stringify({ id: 'evt_123' }));
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, 'Stripe webhook signature verification failed.');
+  assert.match(response.body.details, /No signatures found matching/);
+});
+
 test('normalizeStripeSignatureHeader rejects multiple signature values', () => {
   const result = normalizeStripeSignatureHeader(['t=1,v1=abc', 't=2,v1=def']);
 
