@@ -1,0 +1,32 @@
+{
+  "name": "literate-doodle",
+  "version": "1.0.0",
+  "description": "Minimal Stripe Connect onboarding and payout foundation for secure bank onboarding via Stripe-hosted flows.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/primedigitalexchange-code/literate-doodle"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "payouts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.3",
+    "express": "^5.2.1",
+    "stripe": "^22.6.2"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.4"
+  }
+}
