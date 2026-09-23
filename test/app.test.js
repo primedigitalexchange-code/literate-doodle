@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 
-const { createApp } = require('../src/app');
+const { createApp, normalizeStripeSignatureHeader } = require('../src/app');
 
 function createConfig(overrides = {}) {
   return {
@@ -144,12 +144,44 @@ test('POST /api/webhooks/stripe verifies the event through the injected Stripe s
   assert.equal(constructArgs.secret, 'whsec_123');
 });
 
-test('GET /onboarding/return escapes the account query parameter before rendering', async () => {
+test('normalizeStripeSignatureHeader rejects multiple signature values', () => {
+  const result = normalizeStripeSignatureHeader(['t=1,v1=abc', 't=2,v1=def']);
+
+  assert.equal(result.error, 'Multiple Stripe signature headers are not allowed.');
+});
+
+test('POST /api/webhooks/stripe rejects a missing signature header', async () => {
   const app = createApp({ config: createConfig(), stripeService: {} });
 
-  const response = await request(app).get('/onboarding/return?account=%3Cscript%3Ealert(1)%3C%2Fscript%3E');
+  const response = await request(app).post('/api/webhooks/stripe').set('content-type', 'application/json').send('{}');
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, 'Missing Stripe signature header.');
+});
+
+test('GET /onboarding/return rejects a missing account query parameter', async () => {
+  const app = createApp({ config: createConfig(), stripeService: {} });
+
+  const response = await request(app).get('/onboarding/return');
+
+  assert.equal(response.status, 400);
+  assert.match(response.text, /Missing account query parameter/);
+});
+
+test('GET /onboarding/return rejects an invalid account query parameter', async () => {
+  const app = createApp({ config: createConfig(), stripeService: {} });
+
+  const response = await request(app).get('/onboarding/return?account=not-an-account');
+
+  assert.equal(response.status, 400);
+  assert.match(response.text, /valid Stripe account ID/);
+});
+
+test('GET /onboarding/return renders when the account query parameter is valid', async () => {
+  const app = createApp({ config: createConfig(), stripeService: {} });
+
+  const response = await request(app).get('/onboarding/return?account=acct_123');
 
   assert.equal(response.status, 200);
   assert.match(response.text, /Review the connected account status in Stripe/);
-  assert.doesNotMatch(response.text, /<script>alert\(1\)<\/script>/);
 });

@@ -10,6 +10,18 @@ const {
   validatePayoutRequest,
 } = require('./validation');
 
+function normalizeStripeSignatureHeader(signatureHeader) {
+  if (Array.isArray(signatureHeader)) {
+    return { error: 'Multiple Stripe signature headers are not allowed.' };
+  }
+
+  if (!signatureHeader) {
+    return { error: 'Missing Stripe signature header.' };
+  }
+
+  return { value: signatureHeader };
+}
+
 function createApp({ config = createAppConfig(), stripeService = createStripeService(config) } = {}) {
   const app = express();
 
@@ -20,13 +32,15 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
       });
     }
 
-    const signature = req.headers['stripe-signature'];
-    if (!signature) {
-      return res.status(400).json({ error: 'Missing Stripe signature header.' });
+    const { error: signatureError, value: signatureHeader } = normalizeStripeSignatureHeader(
+      req.headers['stripe-signature']
+    );
+    if (signatureError) {
+      return res.status(400).json({ error: signatureError });
     }
 
     try {
-      const event = stripeService.constructWebhookEvent(req.body, signature, config.stripeWebhookSecret);
+      const event = stripeService.constructWebhookEvent(req.body, signatureHeader, config.stripeWebhookSecret);
 
       return res.status(200).json({
         received: true,
@@ -152,6 +166,15 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
   });
 
   app.get('/onboarding/return', (req, res) => {
+    const accountId = req.query.account;
+    if (!accountId || typeof accountId !== 'string') {
+      return res.status(400).send('Missing account query parameter.');
+    }
+    const accountIdError = validateConnectedAccountId(accountId);
+    if (accountIdError) {
+      return res.status(400).send(accountIdError);
+    }
+
     res.type('html').send(`<!doctype html>
 <html lang="en">
   <head><meta charset="utf-8" /><title>Stripe onboarding return</title></head>
@@ -177,4 +200,5 @@ function createApp({ config = createAppConfig(), stripeService = createStripeSer
 
 module.exports = {
   createApp,
+  normalizeStripeSignatureHeader,
 };
