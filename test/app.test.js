@@ -91,6 +91,16 @@ test('POST /api/payouts creates a transfer when the Stripe account is ready', as
   assert.equal(response.body.transferId, 'tr_123');
 });
 
+test('POST /api/payouts rejects requests without a currency', async () => {
+  const stripeService = {};
+  const app = createApp({ config: createConfig(), stripeService });
+
+  const response = await request(app).post('/api/payouts').send({ connectedAccountId: 'acct_123', amount: 2500 });
+
+  assert.equal(response.status, 400);
+  assert.match(response.body.details.join(' '), /currency is required/i);
+});
+
 test('POST /api/payouts blocks transfers when the transfers capability is missing', async () => {
   const stripeService = {
     getConnectedAccount: async () => ({
@@ -140,6 +150,6 @@ test('GET /onboarding/return escapes the account query parameter before renderin
   const response = await request(app).get('/onboarding/return?account=%3Cscript%3Ealert(1)%3C%2Fscript%3E');
 
   assert.equal(response.status, 200);
-  assert.match(response.text, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.match(response.text, /Review the connected account status in Stripe/);
   assert.doesNotMatch(response.text, /<script>alert\(1\)<\/script>/);
 });

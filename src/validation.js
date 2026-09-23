@@ -32,6 +32,10 @@ function validateAmount(amount) {
 }
 
 function validateCurrency(currency, supportedCurrencies) {
+  if (typeof currency !== 'string' || currency.trim() === '') {
+    return 'currency is required and must be a 3-letter ISO currency code.';
+  }
+
   if (typeof currency !== 'string' || !ISO_CURRENCY_PATTERN.test(currency.toLowerCase())) {
     return 'currency must be a 3-letter ISO currency code.';
   }
@@ -62,7 +66,7 @@ function validatePayoutRequest(payload, supportedCurrencies) {
     errors.push(amountError);
   }
 
-  const currencyError = validateCurrency(payload.currency || 'usd', supportedCurrencies);
+  const currencyError = validateCurrency(payload.currency, supportedCurrencies);
   if (currencyError) {
     errors.push(currencyError);
   }
